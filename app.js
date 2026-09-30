@@ -6,7 +6,7 @@ const clearButton = document.getElementById("clearButton");
 const statusText = document.getElementById("status");
 
 const storageKey = "jarvis-web-history-v2";
-const apiUrl = "https://refactored-tribble-ww6jxvg957x3v6vq-8080.app.github.dev/chat";
+const apiUrl = "https://jarvis-api-775940061074.us-central1.run.app/chat";
 
 function saveHistory() {
   localStorage.setItem(storageKey, chat.innerHTML);
