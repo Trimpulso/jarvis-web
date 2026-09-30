@@ -9,6 +9,9 @@ HOST = "0.0.0.0"
 PORT = int(os.environ.get("PORT", "8080"))
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
+# Origen permitido para CORS (Tu frontend en GitHub Pages)
+ALLOWED_ORIGIN = "https://trimpulso.github.io"
+
 PRIMARY_MODEL = "gemini-3.8-flash"
 FALLBACK_MODELS = [
     "gemini-3.7-flash",
@@ -44,22 +47,36 @@ def call_gemini(model, request_data):
 
 
 class JarvisHandler(BaseHTTPRequestHandler):
+    def get_cors_origin(self):
+        """Valida si el origen de la solicitud coincide con el permitido."""
+        origin = self.headers.get("Origin", "")
+        if origin == ALLOWED_ORIGIN:
+            return ALLOWED_ORIGIN
+        # Si no hay encabezado Origin (como peticiones cURL o internas), permite continuar
+        if not origin:
+            return ALLOWED_ORIGIN
+        return ""
+
+    def send_cors_headers(self):
+        """Aplica las cabeceras de CORS restringidas."""
+        allowed = self.get_cors_origin()
+        if allowed:
+            self.send_header("Access-Control-Allow-Origin", allowed)
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+
     def send_json(self, status, data):
         body = json.dumps(data, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_cors_headers()
         self.end_headers()
         self.wfile.write(body)
 
     def do_OPTIONS(self):
         self.send_response(204)
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_cors_headers()
         self.send_header("Access-Control-Max-Age", "86400")
         self.end_headers()
 
@@ -189,6 +206,7 @@ class JarvisHandler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     print(f"Jarvis API iniciada en http://{HOST}:{PORT}")
+    print(f"Origen CORS permitido: {ALLOWED_ORIGIN}")
     print(f"Modelo principal: {PRIMARY_MODEL}")
     print(f"Modelos de respaldo: {', '.join(FALLBACK_MODELS)}")
     HTTPServer((HOST, PORT), JarvisHandler).serve_forever()
