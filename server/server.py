@@ -6,7 +6,7 @@ from urllib.request import Request, urlopen
 
 
 HOST = "0.0.0.0"
-PORT = 8080
+PORT = int(os.environ.get("PORT", "8080"))
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
 PRIMARY_MODEL = "gemini-3.8-flash"
@@ -19,7 +19,7 @@ FALLBACK_MODELS = [
 SYSTEM_PROMPT = """
 Eres Jarvis, un asistente personal para un usuario chileno.
 Responde siempre en español claro, directo y útil.
-El usuario trabaja con un negocio de sushi, automatización, Google Cloud y Power BI.
+El usuario trabaja con modelo de inteligencia avanzada.
 No inventes acciones ni datos. Antes de enviar mensajes, borrar datos,
 hacer compras o modificar información externa, pide confirmación.
 Mantén respuestas breves, salvo que el usuario pida detalle.
