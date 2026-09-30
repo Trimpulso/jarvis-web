@@ -1,10 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Share+Tech+Mono&display=swap');
+
 :root {
-  --fondo: #030712;
-  --panel: #0b1b2b;
-  --linea: #1d5876;
-  --azul: #39d9ff;
-  --texto: #e8f8ff;
-  --suave: #9bb7c7;
+  --fondo: #02060d; /* Fondo casi negro */
+  --panel: rgba(8, 22, 38, 0.75);
+  --linea: #0f4c75;
+  --azul: #00f0ff; /* Cyan brillante neón */
+  --texto: #c8e1f5;
+  --suave: #4a82a6;
+  --alerta: #ff3333; /* Rojo para advertencias/borrar */
 }
 
 * {
@@ -15,11 +18,16 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  font-family: Arial, sans-serif;
+  /* Tipografía de consola tecnológica */
+  font-family: 'Share Tech Mono', monospace; 
   color: var(--texto);
-  background:
-    radial-gradient(circle at 50% 0%, #123a5b, transparent 42%),
-    var(--fondo);
+  background-color: var(--fondo);
+  /* Fondo cuadriculado tipo pantalla de laboratorio */
+  background-image: 
+    radial-gradient(circle at 50% 10%, rgba(0, 240, 255, 0.1) 0%, transparent 40%),
+    linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
+  background-size: 100% 100%, 30px 30px, 30px 30px;
 }
 
 .app {
@@ -27,85 +35,181 @@ body {
   min-height: 100vh;
   margin: 0 auto;
   padding: 32px 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* Anillo animado giratorio detrás del título */
+.app::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 250px;
+  height: 250px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 240, 255, 0.1);
+  border-top: 2px solid var(--azul);
+  border-right: 2px solid transparent;
+  border-bottom: 1px dotted rgba(0, 240, 255, 0.5);
+  border-left: 2px solid transparent;
+  animation: spin 10s linear infinite;
+  z-index: -1;
+}
+
+@keyframes spin {
+  100% { transform: translateX(-50%) rotate(360deg); }
 }
 
 h1 {
   margin: 0;
   color: var(--azul);
-  font-size: clamp(44px, 10vw, 76px);
-  letter-spacing: 8px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(40px, 8vw, 70px);
+  letter-spacing: 12px;
   text-align: center;
-  text-shadow: 0 0 20px var(--azul);
+  text-shadow: 0 0 10px var(--azul), 0 0 30px rgba(0, 240, 255, 0.5);
+  text-transform: uppercase;
 }
 
 #status {
   margin: 10px 0 24px;
-  color: var(--suave);
+  color: var(--azul);
   text-align: center;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  animation: pulseText 2.5s infinite;
+}
+
+@keyframes pulseText {
+  0%, 100% { opacity: 0.8; text-shadow: 0 0 5px var(--azul); }
+  50% { opacity: 0.3; text-shadow: none; }
 }
 
 #chat {
-  min-height: 330px;
+  min-height: 350px;
+  max-height: 500px;
   margin-bottom: 18px;
   padding: 18px;
   overflow-y: auto;
-  border: 1px solid var(--linea);
-  border-radius: 16px;
-  background: rgba(8, 22, 38, 0.9);
-  box-shadow: 0 0 28px rgba(57, 217, 255, 0.12);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 4px; /* Bordes más rectos, menos redondeados */
+  background: var(--panel);
+  box-shadow: inset 0 0 20px rgba(0, 240, 255, 0.05), 0 0 15px rgba(0, 240, 255, 0.1);
+  backdrop-filter: blur(5px);
 }
 
 #chat p {
   width: fit-content;
   max-width: 85%;
-  margin: 0 0 12px;
-  padding: 12px 14px;
-  line-height: 1.45;
-  border: 1px solid var(--linea);
-  border-radius: 12px;
-  background: #0c2639;
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  line-height: 1.5;
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  border-left: 4px solid var(--azul); /* Línea gruesa lateral típica de Sci-Fi */
+  background: rgba(0, 20, 40, 0.6);
+  border-radius: 0 8px 8px 0; /* Esquina cortada */
+  animation: slideIn 0.3s ease-out;
 }
 
-.input-row {
+#chat p strong {
+  color: var(--azul);
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 1px;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(10px) translateX(-10px); }
+  to { opacity: 1; transform: translateY(0) translateX(0); }
+}
+
+/* Aplicar flexbox al contenedor de los inputs (por si no tienes la clase input-row) */
+div:has(> #textInput), .input-row {
   display: flex;
   gap: 10px;
 }
 
-input,
-button {
-  border: 1px solid var(--linea);
-  border-radius: 10px;
-  font: inherit;
+input, button {
+  border-radius: 4px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 16px;
 }
 
 input {
+  flex: 1;
   width: 100%;
   padding: 14px;
-  color: var(--texto);
+  color: var(--azul);
   outline: none;
-  background: #071420;
+  background: rgba(0, 20, 40, 0.8);
+  border: 1px solid var(--linea);
+  letter-spacing: 1px;
+  transition: 0.3s;
 }
 
 input:focus {
   border-color: var(--azul);
-  box-shadow: 0 0 0 3px rgba(57, 217, 255, 0.16);
+  box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.1), 0 0 8px rgba(0, 240, 255, 0.4);
+}
+
+input::placeholder {
+  color: var(--suave);
+  opacity: 0.6;
 }
 
 button {
-  padding: 14px 18px;
-  color: #001019;
+  padding: 14px 20px;
+  color: #010a12;
   font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
   cursor: pointer;
   background: var(--azul);
+  border: 1px solid var(--azul);
+  transition: all 0.2s ease-in-out;
 }
 
-button:hover {
-  filter: brightness(1.12);
+/* Efecto hover holográfico */
+button:hover:not(:disabled) {
+  background: transparent;
+  color: var(--azul);
+  box-shadow: inset 0 0 15px rgba(0, 240, 255, 0.3), 0 0 15px rgba(0, 240, 255, 0.4);
+}
+
+button:disabled {
+  background: #11364d;
+  color: var(--suave);
+  border-color: var(--linea);
+  cursor: not-allowed;
 }
 
 #voiceButton {
   width: 100%;
   margin-top: 12px;
+  background: transparent;
+  color: var(--azul);
+  border: 1px solid var(--azul);
+}
+
+#voiceButton:hover:not(:disabled) {
+  background: rgba(0, 240, 255, 0.1);
+}
+
+#clearButton {
+  width: 100%;
+  margin-top: 12px;
+  background: transparent;
+  color: var(--alerta);
+  border: 1px solid var(--alerta);
+}
+
+#clearButton:hover:not(:disabled) {
+  background: rgba(255, 51, 51, 0.1);
+  color: var(--alerta);
+  box-shadow: inset 0 0 15px rgba(255, 51, 51, 0.3), 0 0 15px rgba(255, 51, 51, 0.3);
 }
 
 @media (max-width: 560px) {
@@ -113,8 +217,8 @@ button:hover {
     width: min(100% - 20px, 860px);
     padding: 20px 0;
   }
-
-  .input-row {
+  
+  div:has(> #textInput), .input-row {
     flex-direction: column;
   }
 }
