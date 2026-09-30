@@ -55,10 +55,15 @@ async function getJarvisReply(userMessage) {
     })
   });
 
-  const data = await response.json();
+  let data;
+  try {
+    data = await response.json();
+  } catch (e) {
+    throw new Error(`El servidor devolvió una respuesta no válida (${response.status} ${response.statusText}).`);
+  }
 
   if (!response.ok) {
-    throw new Error(data.error || "No pude obtener una respuesta de Jarvis.");
+    throw new Error(data.error || data.message || `Error del servidor (${response.status})`);
   }
 
   return data.reply;
