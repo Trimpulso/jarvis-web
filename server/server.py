@@ -1,0 +1,129 @@
+import json
+import os
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from urllib.request import Request, urlopen
+from urllib.error import HTTPError, URLError
+
+HOST = "0.0.0.0"
+PORT = 8080
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+
+SYSTEM_PROMPT = """
+Eres Jarvis, un asistente personal para un usuario chileno.
+Responde siempre en español claro, directo y útil.
+El usuario trabaja con un negocio de sushi, automatización, Google Cloud y Power BI.
+No inventes acciones ni datos. Antes de enviar mensajes, borrar datos,
+hacer compras o modificar información externa, pide confirmación.
+Mantén respuestas breves, salvo que el usuario pida detalle.
+""".strip()
+
+
+class JarvisHandler(BaseHTTPRequestHandler):
+    def send_json(self, status, data):
+        body = json.dumps(data).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_OPTIONS(self):
+        self.send_json(200, {})
+
+    def do_GET(self):
+        if self.path == "/health":
+            self.send_json(200, {
+                "ok": True,
+                "provider": "gemini",
+                "configured": bool(GEMINI_API_KEY)
+            })
+            return
+
+        self.send_json(404, {"error": "Ruta no encontrada"})
+
+    def do_POST(self):
+        if self.path != "/chat":
+            self.send_json(404, {"error": "Ruta no encontrada"})
+            return
+
+        if not GEMINI_API_KEY:
+            self.send_json(500, {
+                "error": "Falta configurar GEMINI_API_KEY en el servidor."
+            })
+            return
+
+        try:
+            content_length = int(self.headers.get("Content-Length", "0"))
+            raw_body = self.rfile.read(content_length)
+            payload = json.loads(raw_body.decode("utf-8"))
+            message = str(payload.get("message", "")).strip()
+
+            if not message:
+                self.send_json(400, {"error": "El mensaje no puede estar vacío."})
+                return
+
+            request_data = {
+                "system_instruction": {
+                    "parts": [{"text": SYSTEM_PROMPT}]
+                },
+                "contents": [{
+                    "role": "user",
+                    "parts": [{"text": message}]
+                }],
+                "generationConfig": {
+                    "temperature": 0.7,
+                    "maxOutputTokens": 600
+                }
+            }
+
+            url = (
+                "https://generativelanguage.googleapis.com/v1beta/"
+                f"models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
+            )
+
+            request = Request(
+                url,
+                data=json.dumps(request_data).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST"
+            )
+
+            with urlopen(request, timeout=60) as response:
+                gemini_data = json.loads(response.read().decode("utf-8"))
+
+            reply = (
+                gemini_data["candidates"][0]["content"]["parts"][0]["text"]
+            )
+
+            self.send_json(200, {"reply": reply})
+
+        except HTTPError as error:
+            details = error.read().decode("utf-8", errors="replace")
+            self.send_json(502, {
+                "error": "Gemini rechazó la solicitud.",
+                "details": details
+            })
+
+        except URLError as error:
+            self.send_json(502, {
+                "error": f"No fue posible conectar con Gemini: {error.reason}"
+            })
+
+        except (KeyError, IndexError, TypeError):
+            self.send_json(502, {
+                "error": "Gemini respondió con un formato inesperado."
+            })
+
+        except json.JSONDecodeError:
+            self.send_json(400, {"error": "El cuerpo enviado no es JSON válido."})
+
+        except Exception as error:
+            self.send_json(500, {"error": f"Error interno: {str(error)}"})
+
+
+if __name__ == "__main__":
+    print(f"Jarvis API iniciada en http://{HOST}:{PORT}")
+    HTTPServer((HOST, PORT), JarvisHandler).serve_forever()
