@@ -21,7 +21,6 @@
     </div>
 
     <button id="voiceButton" type="button">Hablar con Jarvis</button>
-    <button id="clearButton" type="button">Borrar chat</button>
 
     <script src="app.js"></script>
   </main>
