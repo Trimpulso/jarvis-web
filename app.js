@@ -46,7 +46,7 @@ function createJarvisReply(userMessage) {
   const message = userMessage.toLowerCase();
 
   if (message.includes("hola")) {
-    return "Hola. Sistemas operativos activos. ¿Qué necesitas?";
+    return "Hola. Soy Jarvis tu asistente virtual ... Dios te Bendiga... ¿Qué necesitas?";
   }
 
   if (message.includes("hora")) {
