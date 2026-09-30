@@ -1,12 +1,11 @@
-const chat = document.getElementById("chat");
+ const chat = document.getElementById("chat");
 const textInput = document.getElementById("textInput");
 const sendButton = document.getElementById("sendButton");
 const voiceButton = document.getElementById("voiceButton");
 const clearButton = document.getElementById("clearButton");
 const statusText = document.getElementById("status");
 
-const storageKey = "jarvis-web-history-v2";
-const apiUrl = "https://refactored-tribble-ww6jxvg957x3v6vq-8080.app.github.dev/chat";
+const storageKey = "jarvis-web-history-v1";
 
 function saveHistory() {
   localStorage.setItem(storageKey, chat.innerHTML);
@@ -25,7 +24,6 @@ function loadHistory() {
 
   if (savedChat) {
     chat.innerHTML = savedChat;
-    chat.scrollTop = chat.scrollHeight;
   }
 }
 
@@ -44,27 +42,30 @@ function speak(text) {
   window.speechSynthesis.speak(speech);
 }
 
-async function getJarvisReply(userMessage) {
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      message: userMessage
-    })
-  });
+function createJarvisReply(userMessage) {
+  const message = userMessage.toLowerCase();
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || "No pude obtener una respuesta de Jarvis.");
+  if (message.includes("hola")) {
+    return "Hola. Soy Jarvis tu asistente virtual ... Dios te Bendiga... ¿Qué necesitas?";
   }
 
-  return data.reply;
+  if (message.includes("hora")) {
+    const time = new Date().toLocaleTimeString("es-CL", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+
+    return `Son las ${time}.`;
+  }
+
+  if (message.includes("quién eres") || message.includes("quien eres")) {
+    return "Soy Jarvis Web. Esta versión guarda el historial en tu navegador.";
+  }
+
+  return `Recibí tu mensaje: ${userMessage}. Aún soy una versión de prueba. El siguiente módulo será conectar una inteligencia artificial real.`;
 }
 
-async function sendMessage(text) {
+function sendMessage(text) {
   const cleanText = text.trim();
 
   if (!cleanText) {
@@ -73,25 +74,14 @@ async function sendMessage(text) {
 
   addMessage("TÚ", cleanText);
   textInput.value = "";
-  sendButton.disabled = true;
-  voiceButton.disabled = true;
-  statusText.textContent = "Jarvis está pensando...";
+  statusText.textContent = "Jarvis está procesando...";
 
-  try {
-    const reply = await getJarvisReply(cleanText);
+  window.setTimeout(() => {
+    const reply = createJarvisReply(cleanText);
     addMessage("JARVIS", reply);
     speak(reply);
     statusText.textContent = "Sistema listo";
-  } catch (error) {
-    addMessage(
-      "JARVIS",
-      `No pude conectar con Gemini: ${error.message}`
-    );
-    statusText.textContent = "Error de conexión";
-  } finally {
-    sendButton.disabled = false;
-    voiceButton.disabled = false;
-  }
+  }, 500);
 }
 
 sendButton.addEventListener("click", () => {
@@ -145,10 +135,7 @@ if (!SpeechRecognition) {
 
   recognition.addEventListener("end", () => {
     voiceButton.textContent = "Hablar con Jarvis";
-
-    if (!window.speechSynthesis.speaking) {
-      statusText.textContent = "Sistema listo";
-    }
+    statusText.textContent = "Sistema listo";
   });
 
   recognition.addEventListener("error", () => {
